@@ -1,23 +1,17 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.hilt)
+    alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.ksp)
 }
 
 android {
-    namespace = "ru.nomad.pokemon"
+    namespace = "ru.nomad.pokemon.core.designsystem"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "ru.nomad.pokemon"
         minSdk = 24
-        targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
     }
 
     buildTypes {
@@ -41,10 +35,6 @@ android {
 }
 
 dependencies {
-    implementation(projects.core.designsystem)
-    implementation(projects.feature.pokemons)
-
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.hilt.android)
-    ksp(libs.hilt.compiler)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.material3)
 }
