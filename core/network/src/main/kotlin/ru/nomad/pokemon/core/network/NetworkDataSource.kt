@@ -1,8 +1,11 @@
 package ru.nomad.pokemon.core.network
 
-import kotlinx.coroutines.flow.Flow
+import ru.nomad.pokemon.core.network.model.NetworkResponse
 import ru.nomad.pokemon.core.network.model.PokemonDto
 
 interface NetworkDataSource {
-    fun getPokemonList(): Flow<List<PokemonDto>>
+    suspend fun getPokemonList(
+        offset: Int? = null,
+        limit: Int? = null
+    ): NetworkResponse<PokemonDto>
 }

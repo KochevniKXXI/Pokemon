@@ -3,38 +3,35 @@ package ru.nomad.pokemon.feature.pokemons
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.FixedScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.PreviewScreenSizes
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import coil.decode.SvgDecoder
-import coil.request.ImageRequest
+import androidx.paging.LoadState
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.MutableStateFlow
 import ru.nomad.pokemon.core.designsystem.component.EmptyWidget
 import ru.nomad.pokemon.core.designsystem.component.ErrorWidget
 import ru.nomad.pokemon.core.designsystem.component.LoadingWidget
 import ru.nomad.pokemon.core.designsystem.theme.PokemonTheme
 import ru.nomad.pokemon.core.model.Pokemon
+import ru.nomad.pokemon.feature.pokemons.preview.PokemonPreviewParameterProvider
+import ru.nomad.pokemon.feature.pokemons.component.PokemonCard
 import ru.nomad.pokemon.core.designsystem.R as designsystemR
 
 @Composable
@@ -42,52 +39,51 @@ fun PokemonListScreen(
     modifier: Modifier = Modifier,
     viewModel: PokemonListViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val lazyPagingPokemon = viewModel.uiState.collectAsLazyPagingItems()
 
     PokemonListScreen(
-        uiState = uiState,
+        lazyPagingPokemon = lazyPagingPokemon,
         modifier = modifier
     )
 }
 
 @Composable
 private fun PokemonListScreen(
-    uiState: PokemonListUiState,
+    lazyPagingPokemon: LazyPagingItems<Pokemon>,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         topBar = { PokemonListTopAppBar() },
         modifier = modifier
     ) { paddingValues ->
+        val refreshLoadState = lazyPagingPokemon.loadState.refresh
         val contentModifier = Modifier
             .padding(paddingValues)
             .fillMaxSize()
 
-        when (uiState) {
-            PokemonListUiState.Loading -> {
-                LoadingWidget(
-                    modifier = contentModifier
-                )
+        when (refreshLoadState) {
+            is LoadState.Loading -> {
+                LoadingWidget(modifier = contentModifier)
             }
 
-            is PokemonListUiState.Error -> {
+            is LoadState.Error -> {
                 ErrorWidget(
-                    message = uiState.throwable.message,
+                    message = refreshLoadState.error.message,
                     modifier = contentModifier
                 )
             }
 
-            is PokemonListUiState.Success -> {
-                PokemonGrid(
-                    pokemonList = uiState.pokemonList,
-                    modifier = contentModifier
-                )
-            }
-
-            PokemonListUiState.Empty -> {
-                EmptyWidget(
-                    modifier = contentModifier
-                )
+            is LoadState.NotLoading -> {
+                if (refreshLoadState.endOfPaginationReached && lazyPagingPokemon.itemCount == 0) {
+                    EmptyWidget(modifier = contentModifier)
+                } else {
+                    PokemonGrid(
+                        lazyPagingPokemon = lazyPagingPokemon,
+                        modifier = Modifier
+                            .padding(paddingValues)
+                            .fillMaxSize()
+                    )
+                }
             }
         }
     }
@@ -113,7 +109,7 @@ private fun PokemonListTopAppBar(
 
 @Composable
 private fun PokemonGrid(
-    pokemonList: List<Pokemon>,
+    lazyPagingPokemon: LazyPagingItems<Pokemon>,
     modifier: Modifier = Modifier
 ) {
     LazyVerticalGrid(
@@ -123,83 +119,47 @@ private fun PokemonGrid(
         horizontalArrangement = Arrangement.spacedBy(dimensionResource(designsystemR.dimen.s_space)),
         modifier = modifier
     ) {
-        items(pokemonList) { pokemon ->
-            PokemonCard(
-                pokemon = pokemon
-            )
-        }
-    }
-}
-
-@Composable
-private fun PokemonCard(
-    pokemon: Pokemon,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .aspectRatio(1f)
-    ) {
-        val imageModifier = Modifier
-            .weight(1f)
-            .fillMaxWidth()
-        val imageScale = FixedScale(0.5f)
-
-        if (LocalInspectionMode.current) {
-            Image(
-                painter = painterResource(designsystemR.drawable.pokemon_image_preview_placeholder),
-                contentDescription = null,
-                contentScale = imageScale,
-                modifier = imageModifier
-            )
-        } else {
-            val context = LocalContext.current
-
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(pokemon.image)
-                    .decoderFactory(SvgDecoder.Factory())
-                    .build(),
-                contentDescription = null,
-                contentScale = imageScale,
-                modifier = imageModifier
-            )
+        items(lazyPagingPokemon.itemCount) { index ->
+            lazyPagingPokemon[index]?.let { pokemon ->
+                PokemonCard(pokemon = pokemon)
+            }
         }
 
-        Text(
-            text = pokemon.name,
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(dimensionResource(designsystemR.dimen.s_space))
-        )
+        lazyPagingPokemon.apply {
+            val appendLoadState = loadState.append
+
+            when (appendLoadState) {
+                is LoadState.Loading -> {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        LoadingWidget(modifier = Modifier.fillMaxWidth())
+                    }
+                }
+
+                is LoadState.Error -> {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        ErrorWidget(
+                            message = appendLoadState.error.message,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                is LoadState.NotLoading -> {}
+            }
+        }
     }
 }
 
 @PreviewLightDark
+@PreviewScreenSizes
 @Composable
-private fun PokemonListScreenPreview() {
+private fun PokemonListScreenPreview(
+    @PreviewParameter(PokemonPreviewParameterProvider::class)
+    pagingPokemon: PagingData<Pokemon>
+) {
     PokemonTheme {
         PokemonListScreen(
-            uiState = PokemonListUiState.Success(
-                pokemonList = listOf(
-                    Pokemon(
-                        name = "Pikachu",
-                        image = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/25.svg"
-                    ),
-                    Pokemon(
-                        name = "Pikachu",
-                        image = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/25.svg"
-                    ),
-                    Pokemon(
-                        name = "Pikachu",
-                        image = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/25.svg"
-                    ),
-                    Pokemon(
-                        name = "Pikachu",
-                        image = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/25.svg"
-                    )
-                )
-            )
+            lazyPagingPokemon = MutableStateFlow(pagingPokemon).collectAsLazyPagingItems()
         )
     }
 }

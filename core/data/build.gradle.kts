@@ -36,7 +36,7 @@ dependencies {
     implementation(projects.core.model)
     implementation(projects.core.network)
 
-    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.paging.compose)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 }
