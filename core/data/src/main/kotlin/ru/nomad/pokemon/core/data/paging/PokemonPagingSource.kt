@@ -46,7 +46,6 @@ internal class PokemonPagingSource(
                 if (query.isNotBlank()) {
                     val filteredApiResources = response.results
                         .filter { it.name?.contains(query, true) ?: false }
-                        .take((limit ?: DEFAULT_LIMIT) - apiResources.size)
                     apiResources.addAll(filteredApiResources)
                 } else {
                     apiResources.addAll(response.results)
