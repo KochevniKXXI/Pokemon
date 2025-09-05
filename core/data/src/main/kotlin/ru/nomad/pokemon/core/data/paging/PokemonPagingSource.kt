@@ -30,29 +30,33 @@ internal class PokemonPagingSource(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Pokemon> {
         return try {
             var nextPageNumber = params.key ?: 1
-            var response: ApiResourceList
+            var response: ApiResourceList? = null
             val apiResources = mutableListOf<ApiResource>()
 
-            do {
-                response = if (nextPageNumber == 1) {
-                    networkDataSource.getPokemonResources(limit = limit)
-                } else {
-                    networkDataSource.getPokemonResources(
-                        offset = (limit ?: DEFAULT_LIMIT) * (nextPageNumber - 1),
-                        limit = limit
-                    )
-                }
+            try {
+                do {
+                    response = if (nextPageNumber == 1) {
+                        networkDataSource.getPokemonResources(limit = limit)
+                    } else {
+                        networkDataSource.getPokemonResources(
+                            offset = (limit ?: DEFAULT_LIMIT) * (nextPageNumber - 1),
+                            limit = limit
+                        )
+                    }
 
-                if (query.isNotBlank()) {
-                    val filteredApiResources = response.results
-                        .filter { it.name?.contains(query, true) ?: false }
-                    apiResources.addAll(filteredApiResources)
-                } else {
-                    apiResources.addAll(response.results)
-                }
+                    if (query.isNotBlank()) {
+                        val filteredApiResources = response.results
+                            .filter { it.name?.contains(query, true) ?: false }
+                        apiResources.addAll(filteredApiResources)
+                    } else {
+                        apiResources.addAll(response.results)
+                    }
 
-                nextPageNumber++
-            } while (apiResources.size < (limit ?: DEFAULT_LIMIT) && response.next != null)
+                    nextPageNumber++
+                } while (apiResources.size < (limit ?: DEFAULT_LIMIT) && response.next != null)
+            } catch (e: Exception) {
+                if (apiResources.isEmpty()) throw e
+            }
 
             val semaphore = Semaphore(DEFAULT_LIMIT)
             val pokemonList = mutableListOf<PokemonDto>()
@@ -63,6 +67,8 @@ internal class PokemonPagingSource(
                         semaphore.acquire()
                         try {
                             networkDataSource.getPokemon(pokemon.url)
+                        } catch (_: Exception) {
+                            PokemonDto(pokemon.name ?: "")
                         } finally {
                             semaphore.release()
                         }
@@ -75,7 +81,7 @@ internal class PokemonPagingSource(
             LoadResult.Page(
                 data = pokemonList.map(PokemonDto::asModel),
                 prevKey = null,
-                nextKey = response.next?.let { nextPageNumber }
+                nextKey = response?.next?.let { nextPageNumber }
             )
         } catch (e: Exception) {
             LoadResult.Error(e)
