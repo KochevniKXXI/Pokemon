@@ -2,6 +2,7 @@ package ru.nomad.pokemon.feature.pokemons
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,12 +14,14 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewScreenSizes
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.PagingData
@@ -30,8 +33,9 @@ import ru.nomad.pokemon.core.designsystem.component.ErrorWidget
 import ru.nomad.pokemon.core.designsystem.component.LoadingWidget
 import ru.nomad.pokemon.core.designsystem.theme.PokemonTheme
 import ru.nomad.pokemon.core.model.Pokemon
-import ru.nomad.pokemon.feature.pokemons.preview.PokemonPreviewParameterProvider
 import ru.nomad.pokemon.feature.pokemons.component.PokemonCard
+import ru.nomad.pokemon.feature.pokemons.component.PokemonSearchBar
+import ru.nomad.pokemon.feature.pokemons.preview.PokemonPreviewParameterProvider
 import ru.nomad.pokemon.core.designsystem.R as designsystemR
 
 @Composable
@@ -39,10 +43,13 @@ fun PokemonListScreen(
     modifier: Modifier = Modifier,
     viewModel: PokemonListViewModel = viewModel()
 ) {
-    val lazyPagingPokemon = viewModel.uiState.collectAsLazyPagingItems()
+    val lazyPagingPokemon = viewModel.pokemonPagingData.collectAsLazyPagingItems()
+    val query by viewModel.query.collectAsStateWithLifecycle()
 
     PokemonListScreen(
         lazyPagingPokemon = lazyPagingPokemon,
+        query = query,
+        onQueryChange = viewModel::onQueryChange,
         modifier = modifier
     )
 }
@@ -50,10 +57,17 @@ fun PokemonListScreen(
 @Composable
 private fun PokemonListScreen(
     lazyPagingPokemon: LazyPagingItems<Pokemon>,
+    query: String,
+    onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
-        topBar = { PokemonListTopAppBar() },
+        topBar = {
+            PokemonListTopAppBar(
+                query = query,
+                onQueryChange = onQueryChange
+            )
+        },
         modifier = modifier
     ) { paddingValues ->
         val refreshLoadState = lazyPagingPokemon.loadState.refresh
@@ -74,7 +88,7 @@ private fun PokemonListScreen(
             }
 
             is LoadState.NotLoading -> {
-                if (refreshLoadState.endOfPaginationReached && lazyPagingPokemon.itemCount == 0) {
+                if (lazyPagingPokemon.loadState.append.endOfPaginationReached && lazyPagingPokemon.itemCount == 0) {
                     EmptyWidget(modifier = contentModifier)
                 } else {
                     PokemonGrid(
@@ -92,19 +106,32 @@ private fun PokemonListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PokemonListTopAppBar(
+    query: String,
+    onQueryChange: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    CenterAlignedTopAppBar(
-        title = {
-            Image(
-                painter = painterResource(designsystemR.drawable.text_logo),
-                contentDescription = null,
-                modifier = Modifier
-                    .padding(vertical = dimensionResource(designsystemR.dimen.s_space))
-            )
-        },
+    Column(
         modifier = modifier
-    )
+    ) {
+        CenterAlignedTopAppBar(
+            title = {
+                Image(
+                    painter = painterResource(designsystemR.drawable.text_logo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(vertical = dimensionResource(designsystemR.dimen.s_space))
+                )
+            }
+        )
+        PokemonSearchBar(
+            query = query,
+            onQueryChange = onQueryChange,
+            modifier = Modifier
+                .padding(horizontal = dimensionResource(designsystemR.dimen.m_space))
+                .padding(bottom = dimensionResource(designsystemR.dimen.m_space))
+                .fillMaxWidth()
+        )
+    }
 }
 
 @Composable
@@ -159,7 +186,9 @@ private fun PokemonListScreenPreview(
 ) {
     PokemonTheme {
         PokemonListScreen(
-            lazyPagingPokemon = MutableStateFlow(pagingPokemon).collectAsLazyPagingItems()
+            lazyPagingPokemon = MutableStateFlow(pagingPokemon).collectAsLazyPagingItems(),
+            query = "",
+            onQueryChange = {}
         )
     }
 }

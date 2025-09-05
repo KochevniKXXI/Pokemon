@@ -7,25 +7,46 @@ import androidx.paging.LoadStates
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import ru.nomad.pokemon.core.data.repository.PokemonRepository
+import ru.nomad.pokemon.core.model.Pokemon
 import javax.inject.Inject
 
 @HiltViewModel
 class PokemonListViewModel @Inject constructor(
-    pokemonRepository: PokemonRepository
+    private val pokemonRepository: PokemonRepository
 ) : ViewModel() {
-    val uiState = pokemonRepository.getPokemonList()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = PagingData.empty(
-                LoadStates(
-                    refresh = LoadState.Loading,
-                    prepend = LoadState.NotLoading(false),
-                    append = LoadState.NotLoading(false)
-                )
+    private val _query = MutableStateFlow("")
+    val query = _query.asStateFlow()
+
+    private val _pokemonPagingData = MutableStateFlow<PagingData<Pokemon>>(
+        PagingData.empty(
+            LoadStates(
+                LoadState.Loading,
+                LoadState.NotLoading(false),
+                LoadState.NotLoading(false)
             )
-        ).cachedIn(viewModelScope)
+        )
+    )
+    val pokemonPagingData = _pokemonPagingData.asStateFlow()
+
+    init {
+        searchPokemon()
+    }
+
+    fun onQueryChange(newQuery: String) {
+        _query.value = newQuery
+        searchPokemon()
+    }
+
+    private fun searchPokemon() {
+        viewModelScope.launch {
+            pokemonRepository.getPokemonList(
+                query = query.value
+            ).cachedIn(viewModelScope)
+                .collect { _pokemonPagingData.value = it }
+        }
+    }
 }

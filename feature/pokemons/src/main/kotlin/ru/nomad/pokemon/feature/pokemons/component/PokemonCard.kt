@@ -35,6 +35,7 @@ internal fun PokemonCard(
         val imageModifier = Modifier
             .weight(2f)
             .fillMaxWidth()
+            .padding(horizontal = dimensionResource(designsystemR.dimen.xl_space))
 
         Spacer(modifier = Modifier.weight(1f))
 

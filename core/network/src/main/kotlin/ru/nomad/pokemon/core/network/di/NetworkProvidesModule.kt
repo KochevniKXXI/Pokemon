@@ -16,7 +16,7 @@ import ru.nomad.pokemon.core.network.retrofit.RetrofitPokeApi
 import javax.inject.Singleton
 
 private const val POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/"
-private const val CACHE_MAX_SIZE = 10L * 1024 * 1024 // 10 MB
+private const val CACHE_MAX_SIZE = 50L * 1024 * 1024 // 50 MB
 
 @Module
 @InstallIn(SingletonComponent::class)

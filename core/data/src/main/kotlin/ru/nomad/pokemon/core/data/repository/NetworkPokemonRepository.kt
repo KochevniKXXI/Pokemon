@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import ru.nomad.pokemon.core.data.paging.PokemonPagingSource
 import ru.nomad.pokemon.core.model.Pokemon
 import ru.nomad.pokemon.core.network.NetworkDataSource
-import ru.nomad.pokemon.core.network.util.DEFAULT_LIMIT
+import ru.nomad.pokemon.core.data.util.DEFAULT_LIMIT
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -15,11 +15,18 @@ import javax.inject.Singleton
 internal class NetworkPokemonRepository @Inject constructor(
     private val networkDataSource: NetworkDataSource
 ) : PokemonRepository {
-    override fun getPokemonList(limit: Int?): Flow<PagingData<Pokemon>> {
+    override fun getPokemonList(
+        limit: Int?,
+        query: String
+    ): Flow<PagingData<Pokemon>> {
         return Pager(
             config = PagingConfig(limit ?: DEFAULT_LIMIT)
         ) {
-            PokemonPagingSource(networkDataSource)
+            PokemonPagingSource(
+                networkDataSource,
+                limit,
+                query
+            )
         }.flow
     }
 }

@@ -5,16 +5,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @OptIn(InternalSerializationApi::class)
-data class NetworkResponse<T>(
+data class ApiResourceList(
     val count: Int,
     val next: String?,
     val previous: String?,
-    val results: List<T>,
+    val results: List<ApiResource>,
 )
 
 @Serializable
 @OptIn(InternalSerializationApi::class)
-data class NetworkResource(
+data class ApiResource(
     val name: String?,
     val url: String,
 )

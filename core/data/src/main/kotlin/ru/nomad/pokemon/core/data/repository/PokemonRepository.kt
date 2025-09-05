@@ -5,5 +5,8 @@ import kotlinx.coroutines.flow.Flow
 import ru.nomad.pokemon.core.model.Pokemon
 
 interface PokemonRepository {
-    fun getPokemonList(limit: Int? = null): Flow<PagingData<Pokemon>>
+    fun getPokemonList(
+        limit: Int? = null,
+        query: String = ""
+    ): Flow<PagingData<Pokemon>>
 }
