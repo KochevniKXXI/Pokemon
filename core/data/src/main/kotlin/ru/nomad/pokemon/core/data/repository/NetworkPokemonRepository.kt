@@ -17,7 +17,8 @@ internal class NetworkPokemonRepository @Inject constructor(
 ) : PokemonRepository {
     override fun getPokemonList(
         limit: Int?,
-        query: String
+        query: String,
+        selectedTypes: Set<Pokemon.Type>
     ): Flow<PagingData<Pokemon>> {
         return Pager(
             config = PagingConfig(limit ?: DEFAULT_LIMIT)
@@ -25,7 +26,8 @@ internal class NetworkPokemonRepository @Inject constructor(
             PokemonPagingSource(
                 networkDataSource,
                 limit,
-                query
+                query,
+                selectedTypes
             )
         }.flow
     }

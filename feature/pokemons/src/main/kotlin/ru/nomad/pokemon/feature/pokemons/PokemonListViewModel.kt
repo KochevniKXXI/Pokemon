@@ -1,5 +1,6 @@
 package ru.nomad.pokemon.feature.pokemons
 
+import androidx.compose.runtime.mutableStateSetOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LoadState
@@ -21,6 +22,9 @@ class PokemonListViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
+    private val _selectedTypes = mutableStateSetOf<Pokemon.Type>()
+    val selectedTypes get() = _selectedTypes.toSet()
+
     private val _pokemonPagingData = MutableStateFlow<PagingData<Pokemon>>(
         PagingData.empty(
             LoadStates(
@@ -33,18 +37,31 @@ class PokemonListViewModel @Inject constructor(
     val pokemonPagingData = _pokemonPagingData.asStateFlow()
 
     init {
-        searchPokemon()
+        fetchPokemonList()
     }
 
     fun onQueryChange(newQuery: String) {
         _query.value = newQuery
-        searchPokemon()
+        fetchPokemonList()
     }
 
-    private fun searchPokemon() {
+    fun onTypeClick(type: Pokemon.Type) {
+        if (_selectedTypes.contains(type)) {
+            _selectedTypes.remove(type)
+        } else {
+            _selectedTypes.add(type)
+        }
+    }
+
+    fun applyFilters() {
+        fetchPokemonList()
+    }
+
+    private fun fetchPokemonList() {
         viewModelScope.launch {
             pokemonRepository.getPokemonList(
-                query = query.value
+                query = query.value,
+                selectedTypes = selectedTypes
             ).cachedIn(viewModelScope)
                 .collect { _pokemonPagingData.value = it }
         }

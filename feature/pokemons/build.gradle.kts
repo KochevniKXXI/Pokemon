@@ -41,10 +41,12 @@ dependencies {
     implementation(projects.core.designsystem)
     implementation(projects.core.model)
 
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.paging.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.compose.material.icons.extended)
 
     implementation(libs.coil.compose)
     implementation(libs.coil.svg)

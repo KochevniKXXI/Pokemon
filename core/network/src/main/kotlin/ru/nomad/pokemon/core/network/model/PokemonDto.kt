@@ -9,27 +9,30 @@ import kotlinx.serialization.Serializable
 data class PokemonDto(
     val name: String,
     val sprites: Sprites = Sprites(),
+    val types: Set<Type> = emptySet()
 ) {
 
     @Serializable
-    @OptIn(InternalSerializationApi::class)
     data class Sprites(
         val other: Other = Other(),
     ) {
 
         @Serializable
-        @OptIn(InternalSerializationApi::class)
         data class Other(
             @SerialName("dream_world")
             val dreamWorld: DreamWorld = DreamWorld(),
         ) {
 
             @Serializable
-            @OptIn(InternalSerializationApi::class)
             data class DreamWorld(
                 @SerialName("front_default")
                 val frontDefault: String? = null,
             )
         }
     }
+
+    @Serializable
+    data class Type(
+        val type: ApiResource
+    )
 }

@@ -7,6 +7,7 @@ import ru.nomad.pokemon.core.model.Pokemon
 interface PokemonRepository {
     fun getPokemonList(
         limit: Int? = null,
-        query: String = ""
+        query: String = "",
+        selectedTypes: Set<Pokemon.Type> = emptySet()
     ): Flow<PagingData<Pokemon>>
 }
