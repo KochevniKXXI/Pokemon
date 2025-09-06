@@ -5,5 +5,5 @@ import ru.nomad.pokemon.core.network.model.PokemonDto
 
 internal fun PokemonDto.asModel() = Pokemon(
     name = name.replaceFirstChar(Char::uppercase),
-    image = sprites.other.dreamWorld.frontDefault,
+    image = sprites.other.officialArtwork.frontDefault,
 )

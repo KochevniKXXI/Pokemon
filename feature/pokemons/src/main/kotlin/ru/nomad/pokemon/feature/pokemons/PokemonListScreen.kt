@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.Badge
@@ -25,6 +27,7 @@ import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -59,6 +62,7 @@ import ru.nomad.pokemon.feature.pokemons.component.PokemonSearchBar
 import ru.nomad.pokemon.feature.pokemons.preview.PokemonPreviewParameterProvider
 import ru.nomad.pokemon.core.designsystem.R as designsystemR
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PokemonListScreen(
     modifier: Modifier = Modifier,
@@ -67,15 +71,20 @@ fun PokemonListScreen(
     val lazyPagingPokemon = viewModel.pokemonPagingData.collectAsLazyPagingItems()
     val query by viewModel.query.collectAsStateWithLifecycle()
 
-    PokemonListScreen(
-        lazyPagingPokemon = lazyPagingPokemon,
-        query = query,
-        selectedTypes = viewModel.selectedTypes,
-        onQueryChange = viewModel::onQueryChange,
-        onTypeClick = viewModel::onTypeClick,
-        onApplyFiltersClick = viewModel::applyFilters,
-        modifier = modifier
-    )
+    PullToRefreshBox(
+        isRefreshing = lazyPagingPokemon.loadState.refresh is LoadState.Loading,
+        onRefresh = viewModel::fetchPokemonList
+    ) {
+        PokemonListScreen(
+            lazyPagingPokemon = lazyPagingPokemon,
+            query = query,
+            selectedTypes = viewModel.selectedTypes,
+            onQueryChange = viewModel::onQueryChange,
+            onTypeClick = viewModel::onTypeClick,
+            onApplyFiltersClick = viewModel::fetchPokemonList,
+            modifier = modifier
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,6 +147,7 @@ private fun PokemonListScreen(
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(paddingValues)
+            .verticalScroll(rememberScrollState())
 
         when (refreshLoadState) {
             is LoadState.Loading -> {
@@ -157,7 +167,9 @@ private fun PokemonListScreen(
                 } else {
                     PokemonGrid(
                         lazyPagingPokemon = lazyPagingPokemon,
-                        modifier = contentModifier
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
                     )
                 }
             }
@@ -277,6 +289,7 @@ private fun PokemonGrid(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @PreviewLightDark
 @PreviewScreenSizes
 @Composable
@@ -288,8 +301,8 @@ private fun PokemonListScreenPreview(
         PokemonListScreen(
             lazyPagingPokemon = MutableStateFlow(pagingPokemon).collectAsLazyPagingItems(),
             query = "",
-            onQueryChange = {},
             selectedTypes = emptySet(),
+            onQueryChange = {},
             onTypeClick = {},
             onApplyFiltersClick = {}
         )

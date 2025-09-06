@@ -53,11 +53,7 @@ class PokemonListViewModel @Inject constructor(
         }
     }
 
-    fun applyFilters() {
-        fetchPokemonList()
-    }
-
-    private fun fetchPokemonList() {
+    fun fetchPokemonList() {
         viewModelScope.launch {
             pokemonRepository.getPokemonList(
                 query = query.value,

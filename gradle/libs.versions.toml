@@ -10,6 +10,7 @@ kotlinxSerializationJson = "1.9.0"
 ksp = "2.2.10-2.0.2"
 lifecycle = "2.9.3"
 paging = "3.3.6"
+palette = "1.0.0"
 retrofit = "3.0.0"
 retrofitKotlinxSerializationConverter = "1.0.0"
 
@@ -20,6 +21,7 @@ androidx-compose-material-icons-extended = { module = "androidx.compose.material
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
+androidx-palette = { module = "androidx.palette:palette", version.ref = "palette" }
 androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }

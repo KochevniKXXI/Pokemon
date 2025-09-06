@@ -19,12 +19,12 @@ data class PokemonDto(
 
         @Serializable
         data class Other(
-            @SerialName("dream_world")
-            val dreamWorld: DreamWorld = DreamWorld(),
+            @SerialName("official-artwork")
+            val officialArtwork: OfficialArtwork = OfficialArtwork(),
         ) {
 
             @Serializable
-            data class DreamWorld(
+            data class OfficialArtwork(
                 @SerialName("front_default")
                 val frontDefault: String? = null,
             )
